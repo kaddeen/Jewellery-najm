@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>معرض تصاميم 3D</title>
+    <style>
+        body { margin: 0; background-color: #121212; color: #fff; font-family: Tahoma, sans-serif; overflow: hidden; }
+        #viewer { width: 100vw; height: 100vh; display: block; }
+        
+        /* لوحة التحكم والقائمة الجانبية */
+        .sidebar {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0, 0, 0, 0.85); padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            width: 280px; max-height: 80vh; overflow-y: auto;
+        }
+        h3 { margin-top: 0; color: #00ffcc; font-size: 18px; text-align: center; }
+        p { font-size: 13px; color: #ccc; text-align: center; }
+        
+        /* أزرار قائمة التصاميم */
+        .product-btn {
+            background-color: #222; color: white; padding: 12px;
+            border: 1px solid #444; border-radius: 6px; cursor: pointer;
+            display: block; width: 100%; text-align: right; margin-bottom: 10px;
+            font-size: 14px; transition: 0.3s; box-sizing: border-box;
+        }
+        .product-btn:hover { background-color: #0077ff; border-color: #0077ff; }
+        .product-btn.active { background-color: #005bb5; border-color: #00ffcc; font-weight: bold; }
+        
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); padding: 15px 25px; border-radius: 8px;
+            font-size: 16px; color: #00ffcc; display: none; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3>كتالوج التصاميم</h3>
+        <p>اضغط على أي تصميم لمعاينته ثلاثي الأبعاد:</p>
+        
+        <!-- قائمة التصاميم الخاصة بك (قم بتعديل الأسماء والمسارات حسب رغبتك) -->
+        <button class="product-btn" onclick="loadModel('models/ring1.stl', this)">خاتم زواج مودرن (#1)</button>
+        <button class="product-btn" onclick="loadModel('models/ring2.stl', this)">خاتم فص الماس (#2)</button>
+        <button class="product-btn" onclick="loadModel('models/bangle.stl', this)">غوايش / سوار منقوش (#3)</button>
+    </div>
+
+    <div id="loading">جاري تحميل التصميم...</div>
+    <div id="viewer"></div>
+
+    <!-- مكتبات Three.js وعارض ملفات STL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // إعداد المشهد ثلاثي الأبعاد
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 150);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // إضاءة لإبراز تفاصيل المجوهرات والسطوح
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight1.position.set(1, 1, 1).normalize();
+        scene.add(dirLight1);
+        
+        const dirLight2 = new THREE.DirectionalLight(0x9999ff, 0.4);
+        dirLight2.position.set(-1, -1, -1).normalize();
+        scene.add(dirLight2);
+
+        let currentMesh = null;
+        const loader = new THREE.STLLoader();
+
+        // دالة لتحميل وعرض أي نموذج عند الضغط عليه
+        function loadModel(url, buttonElement) {
+            // تحديث شكل الأزرار (تمييز الزر النشط)
+            document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
+            if(buttonElement) buttonElement.classList.add('active');
+
+            document.getElementById('loading').style.display = 'block';
+
+            loader.load(url, function (geometry) {
+                // إزالة المجسم القديم إن وجد من الشاشة لتفريغ الذاكرة
+                if (currentMesh) {
+                    scene.remove(currentMesh);
+                    currentMesh.geometry.dispose();
+                }
+
+                // لون المادة (يمكنك جعله بلون الذهب أو الفضة أو الأزرق العصري)
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0xd4af37, // لون أقرب للذهبي 
+                    roughness: 0.2,   // لمعان عالي
+                    metalness: 0.8    // مظهر معدني
+                });
+                
+                currentMesh = new THREE.Mesh(geometry, material);
+                
+                geometry.center(); // توسيط المجسم بدقة في منتصف الشاشة
+                scene.add(currentMesh);
+
+                document.getElementById('loading').style.display = 'none';
+            }, undefined, function (error) {
+                console.error(error);
+                alert("تعذر تحميل الملف، تأكد من مسار الملف أو وجوده في المجلد.");
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        // تحميل أول تصميم تلقائياً عند فتح الموقع
+        window.onload = function() {
+            const firstButton = document.querySelector('.product-btn');
+            if(firstButton) firstButton.click();
+        };
+
+        // حلقة الرسم والتحديث المستمر
+        function animate() {
+            requestAnimationFrame5 = requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        // تصحيح حلقة التحديث
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animateLoop();
+
+        // التجاوب مع تغير حجم الشاشة أو الهواتف
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
