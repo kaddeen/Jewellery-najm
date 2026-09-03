@@ -40,10 +40,8 @@
         <h3>كتالوج التصاميم</h3>
         <p>اضغط على أي تصميم لمعاينته ثلاثي الأبعاد:</p>
         
-        <!-- قائمة التصاميم الخاصة بك (قم بتعديل الأسماء والمسارات حسب رغبتك) -->
-        <button class="product-btn" onclick="loadModel('models/ring1.stl', this)">خاتم زواج مودرن (#1)</button>
-        <button class="product-btn" onclick="loadModel('models/ring2.stl', this)">خاتم فص الماس (#2)</button>
-        <button class="product-btn" onclick="loadModel('models/bangle.stl', this)">غوايش / سوار منقوش (#3)</button>
+        <!-- الأزرار مرتبطة مباشرة بالملفات الموجودة في الموقع -->
+        <button class="product-btn" onclick="loadModel('10.stl', this)">تصميم رقم (#10)</button>
     </div>
 
     <div id="loading">جاري تحميل التصميم...</div>
@@ -84,35 +82,32 @@
 
         // دالة لتحميل وعرض أي نموذج عند الضغط عليه
         function loadModel(url, buttonElement) {
-            // تحديث شكل الأزرار (تمييز الزر النشط)
             document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
             if(buttonElement) buttonElement.classList.add('active');
 
             document.getElementById('loading').style.display = 'block';
 
             loader.load(url, function (geometry) {
-                // إزالة المجسم القديم إن وجد من الشاشة لتفريغ الذاكرة
                 if (currentMesh) {
                     scene.remove(currentMesh);
                     currentMesh.geometry.dispose();
                 }
 
-                // لون المادة (يمكنك جعله بلون الذهب أو الفضة أو الأزرق العصري)
+                // لون المادة (مظهر معدني ذهبي)
                 const material = new THREE.MeshStandardMaterial({ 
-                    color: 0xd4af37, // لون أقرب للذهبي 
-                    roughness: 0.2,   // لمعان عالي
-                    metalness: 0.8    // مظهر معدني
+                    color: 0xd4af37, 
+                    roughness: 0.2,   
+                    metalness: 0.8    
                 });
                 
                 currentMesh = new THREE.Mesh(geometry, material);
-                
-                geometry.center(); // توسيط المجسم بدقة في منتصف الشاشة
+                geometry.center(); 
                 scene.add(currentMesh);
 
                 document.getElementById('loading').style.display = 'none';
             }, undefined, function (error) {
                 console.error(error);
-                alert("تعذر تحميل الملف، تأكد من مسار الملف أو وجوده في المجلد.");
+                alert("تعذر تحميل الملف، تأكد من اسم الملف.");
                 document.getElementById('loading').style.display = 'none';
             });
         }
@@ -123,13 +118,7 @@
             if(firstButton) firstButton.click();
         };
 
-        // حلقة الرسم والتحديث المستمر
-        function animate() {
-            requestAnimationFrame5 = requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        // تصحيح حلقة التحديث
+        // حلقة التحديث المستمر
         function animateLoop() {
             requestAnimationFrame(animateLoop);
             controls.update();
